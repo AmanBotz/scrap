@@ -1,8 +1,8 @@
 import logging
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import requests
 from bs4 import BeautifulSoup
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
 
 # Replace with your bot token
 TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
@@ -11,8 +11,8 @@ TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Send me a URL and I will extract video and thumbnail URLs.')
+async def start(update: Update, context: CallbackContext) -> None:
+    await update.message.reply_text('Send me a URL and I will extract video and thumbnail URLs.')
 
 def extract_urls(url: str):
     response = requests.get(url)
@@ -30,25 +30,24 @@ def extract_urls(url: str):
 
     return videos, thumbnails
 
-def handle_message(update: Update, context: CallbackContext) -> None:
+async def handle_message(update: Update, context: CallbackContext) -> None:
     url = update.message.text
     try:
         videos, thumbnails = extract_urls(url)
         response_text = 'Videos:\n' + '\n'.join(videos) + '\n\nThumbnails:\n' + '\n'.join(thumbnails)
-        update.message.reply_text(response_text)
+        await update.message.reply_text(response_text)
     except Exception as e:
         logger.error(f"Error: {e}")
-        update.message.reply_text('There was an error processing the URL.')
+        await update.message.reply_text('There was an error processing the URL.')
 
-def main() -> None:
-    updater = Updater(TOKEN)
-    dispatcher = updater.dispatcher
+async def main() -> None:
+    application = Application.builder().token(TOKEN).build()
 
-    dispatcher.add_handler(CommandHandler('start', start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    import asyncio
+    asyncio.run(main())
