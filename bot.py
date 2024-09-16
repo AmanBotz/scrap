@@ -1,8 +1,8 @@
 import logging
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import requests
 from bs4 import BeautifulSoup
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Replace with your bot token
 TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
@@ -46,7 +46,10 @@ async def main() -> None:
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    await application.run_polling()
+    try:
+        await application.run_polling()
+    finally:
+        await application.shutdown()
 
 if __name__ == '__main__':
     import asyncio
